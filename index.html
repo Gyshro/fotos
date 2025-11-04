@@ -1,0 +1,470 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Sessão de Fotos</title>
+  <style>
+    :root{
+      --bg:#0b0b0d;
+      --panel:#0e0f12;
+      --muted:#bfc3c8;
+      --accent:#ffd25a;
+      --red:#ef4444;
+      --camera-border: #1f2937;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Reset e base */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background:linear-gradient(180deg,#030307 0%, #0b0b0d 100%);
+      color: #fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding-left:16px;
+      padding-right:16px;
+    }
+
+    .container{
+      width:100%;
+      max-width:420px; /* pensado pra iPhone */
+      margin: 12px auto;
+    }
+
+    .center{
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+      text-align:center;
+    }
+
+    .btn{
+      background:var(--accent);
+      border:none;
+      padding:12px 20px;
+      border-radius:999px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow: 0 6px 16px rgba(255,210,90,.12);
+      font-size:16px;
+    }
+    .btn:active{transform:translateY(1px)}
+    .muted{color:var(--muted); font-size:14px}
+
+    /* Moldura câmera - mantém proporção tipo 4:5 (portrait) */
+    .camera-frame{
+      width:100%;
+      position:relative;
+      padding-top:125%; /* altura (approx 4:5 = 125%) */
+      border-radius:18px;
+      overflow:hidden;
+      border:6px solid var(--camera-border);
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.4));
+      box-shadow: 0 12px 28px rgba(0,0,0,.6);
+    }
+
+    .camera-inner{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#000;
+      padding:8px; /* pequeno padding para o texto caber melhor */
+    }
+
+    /* Imagem com filtro vintage */
+    .camera-inner img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      transform:scale(1.02);
+      filter: sepia(0.28) contrast(0.95) saturate(0.85) brightness(0.98);
+    }
+
+    /* textura sutil */
+    .grain {
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='t'%3E%3CfeTurbulence baseFrequency='0.95' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='0.04' filter='url(%23t)' fill='%23000'/%3E%3C/svg%3E");
+      mix-blend-mode:overlay;
+      opacity:0.6;
+    }
+
+    /* flash branco */
+    .flash {
+      position:absolute;
+      inset:0;
+      background:white;
+      opacity:0;
+      pointer-events:none;
+      animation: flashAnim .22s linear forwards;
+    }
+    @keyframes flashAnim{
+      0% { opacity: .95 }
+      100% { opacity: 0 }
+    }
+
+    /* controles abaixo da moldura */
+    .controls{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 6px;
+    }
+
+    .hint{font-size:13px; color: #cfd3d8}
+
+    /* red shutter button */
+    .shutter{
+      width:74px;
+      height:74px;
+      border-radius:999px;
+      background:linear-gradient(180deg,var(--red),#cf2b2b);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 8px 20px rgba(239,68,68,.18);
+      border:6px solid rgba(255,255,255,0.88);
+      transform:translateY(0);
+      touch-action:manipulation;
+    }
+    .shutter:active{transform:scale(.98)}
+    .small{font-size:12px}
+
+    /* progresso (1/6) */
+    .counter{
+      background:rgba(0,0,0,0.45);
+      padding:6px 10px;
+      border-radius:10px;
+      font-size:13px;
+      color:#fff;
+      border:1px solid rgba(255,255,255,0.04);
+    }
+
+    /* tipografia para o modo texto (digitação) */
+    .text-area{
+      padding:12px;
+      font-size:16px;
+      line-height:1.5;
+      color:#fff;
+      width:100%;
+      max-height: calc(125% - 24px); /* ocupa grande parte da moldura, respeitando padding */
+      overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
+      text-align:left;
+      word-break:break-word;
+      background: transparent;
+    }
+
+    /* reduz a fonte em telas pequenas para caber melhor */
+    @media (max-width:380px){
+      .text-area{ font-size:14px; }
+    }
+
+    .cursor{
+      display:inline-block;
+      width:6px;
+      height:18px;
+      background:#fff;
+      margin-left:6px;
+      vertical-align:middle;
+      animation: blink 1s steps(2,start) infinite;
+    }
+    @keyframes blink{50%{opacity:0}}
+
+    /* botão prosseguir */
+    .proceed{
+      background:#2563eb;
+      padding:10px 14px;
+      border-radius:10px;
+      font-weight:700;
+      border:none;
+      color:white;
+    }
+
+    /* responsividade extra */
+    @media (max-width:420px){
+      .shutter{ width:64px; height:64px; border:5px solid rgba(255,255,255,0.9) }
+      .btn{ padding:10px 16px }
+    }
+
+    /* pequenos detalhes para melhorar leitura do texto longo */
+    .text-area p{ margin:0 0 8px 0 }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="app" class="center">
+      <!-- TELA INICIAL -->
+      <div id="intro" class="center">
+        <div style="width:140px;height:140px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),#ff8a47);box-shadow:0 12px 36px rgba(0,0,0,.45)">
+          <strong style="color:#111;font-size:20px">BRILHAR</strong>
+        </div>
+        <p class="muted" style="max-width:320px">
+          Toque em <strong>BRILHAR</strong> para começar a sessão. Filtros vintage, flash e uma sequência de poses
+        </p>
+        <button id="startBtn" class="btn">BRILHAR</button>
+      </div>
+
+      <!-- TELA DE FOTO / MOLDURA -->
+      <div id="shooting" style="display:none; width:100%">
+        <div class="camera-frame" id="frame">
+          <div class="camera-inner" id="cameraInner">
+            <img id="photoImg" src="" alt="pose">
+            <div class="grain"></div>
+            <!-- flash overlay (adicionada dinamicamente) -->
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="hint small">Toque no botão vermelho para fotografar</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="counter" id="counter">1 / 6</div>
+            <button id="shutterBtn" class="shutter" aria-label="Tirar foto" title="Tirar foto"></button>
+            <button id="proceedBtn" class="proceed" style="display:none">Prosseguir</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TELA DE TEXTO (após prosseguir) -->
+      <div id="textScreen" style="display:none; width:100%">
+        <div class="camera-frame">
+          <div class="camera-inner">
+            <div class="text-area" id="typedText" aria-live="polite"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <div class="muted small" id="musicState">Música: pausada</div>
+          <button id="toggleMusic" class="btn small">Tocar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /*
+      Versão ajustada: imagens locais 1.jpg..6.jpg, áudio msc.mp3, digitação ligeiramente mais lenta (80ms).
+      Coloque 1.jpg..6.jpg e msc.mp3 na mesma pasta do index.html.
+    */
+
+    (function(){
+      // ---- CONFIG ----
+      // Imagens locais numeradas 1.jpg .. 6.jpg
+      const images = [
+        "1.png",
+        "2.png",
+        "3.png",
+        "4.png",
+        "5.png",
+        "6.png"
+      ];
+
+      // nome do arquivo de música (coloque msc.mp3 na mesma pasta)
+      const musicUrl = "msc.mp3";
+
+      // Texto que será digitado (substitua por seu texto longo se quiser)
+      const typingText = "É impressionante que você seja assim, como se o universo tivesse parado por um instante só pra te planejar durante os 7 dias que disseram que Deus fez tudo. É uma verdadeira ocasião do alado, porque parece que você é algo feito na medida certa, metódicamente em padrões físicos e interiores que não encontro por ai. A forma como você fala, como se distrai, como pensa e até como se cala quando só quer um pouco de paz pra si. Eu te observo e penso que o mundo é meio injusto contigo, porque parece não entender a preciosidade que existe em ser tão autêntica. Mas ao mesmo tempo, acho que o mundo inteiro não conseguiria te conter, porque você é dessas pessoas que transcendem o comum e o padrão de todos, mas mais do que isso... eu na verdade gosto de pensar em ti como poesia, como uma modelo em meios a flashes de papparazzi. Porque você é além de fotos, você é uma ausência. Talvez porque me falte atitude pra contar o quanto você é uma atração em todo o seu existir e talvez não exista tanto doido quanto eu que faz um tipo de propaganda sobre você que beira ao fascínio de todo tipo possível, um tipo de propaganda que nem mesmo uma ditadura consegue ser exata. E há de quem tenha a coragem de dizer o contrário, porque certamente poderia muito bem acabar sumindo sem nem deixar rastros, seja quem protestasse. A minha ditadura diz com exatidão que há sentença de morte à quem tenta contrariar os gestos de capricho que você tem, a sua energia contagiosa de acordar já a mil por hora... Se lhe amar fosse pensamento, assim como militares amaram ter poder de um país e de pessoas, eu acho que você acabou de encaminhar um regime na mente das pessoas porque você é exatamente dessa forma, instaura na mente dos outros e sem pedir licença, um obrigado, um de nada, só vem. E é nesse charme que eu te vejo, desde o dia em que te conheci. Desde o dia em que eu te vi, eu já sabia que eu iria me entalar em sua personalidade. Se a história tivesse sido diferente... eu não sei a quem dedicaria isso, mas certamente não existiria esse alguém. Mas a verdade é que eu sou, sim, deslumbrado por esse alguém que é você. Deslumbrado por essa tua forma de ser mundo, de carregar o caos e ainda assim fazer dele algo bonito. E por mais que eu tente traduzir em palavras, nenhuma consegue conter o tanto que você representa — porque você não cabe em definições, você é aquilo que transborda. E se o universo realmente parou pra te planejar, então ele acertou o tempo perfeito pra me fazer te notar.";
+      const typingSpeed = 80; // ms por letra (mais lento como você pediu)
+
+      // ---- ELEMENTOS ----
+      const introEl = document.getElementById('intro');
+      const shootingEl = document.getElementById('shooting');
+      const textEl = document.getElementById('textScreen');
+
+      const startBtn = document.getElementById('startBtn');
+      const shutterBtn = document.getElementById('shutterBtn');
+      const proceedBtn = document.getElementById('proceedBtn');
+      const photoImg = document.getElementById('photoImg');
+      const counterEl = document.getElementById('counter');
+      const frame = document.getElementById('frame');
+      const cameraInner = document.getElementById('cameraInner');
+      const typedTextEl = document.getElementById('typedText');
+      const musicState = document.getElementById('musicState');
+      const toggleMusic = document.getElementById('toggleMusic');
+
+      let index = 0;
+      let audio = null;
+      let typingTimer = null;
+      let isTyping = false;
+
+      // Preload imagens (melhora performance)
+      function preloadImages(list){
+        list.forEach(src=>{
+          const im = new Image();
+          im.src = src;
+        });
+      }
+      preloadImages(images);
+
+      // iniciar sessão
+      startBtn.addEventListener('click', () => {
+        introEl.style.display = 'none';
+        shootingEl.style.display = 'block';
+        index = 0;
+        photoImg.src = images[index];
+        counterEl.textContent = `${index+1} / ${images.length}`;
+        proceedBtn.style.display = 'none';
+        // forçar scroll to top da tela (útil em dispositivos móveis)
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
+
+      // Função que cria flash temporário
+      function flashEffect(){
+        const f = document.createElement('div');
+        f.className = 'flash';
+        cameraInner.appendChild(f);
+        // Remove depois da animação (220ms)
+        setTimeout(()=>{ if (f && f.parentNode) f.parentNode.removeChild(f); }, 300);
+      }
+
+      // disparo do obturador
+      shutterBtn.addEventListener('click', () => {
+        // se já terminou todas as poses, nada
+        if (index >= images.length - 1) return;
+
+        // flash (visual)
+        flashEffect();
+
+        // Avança imagem após curtíssima espera (para parecer que foto foi tirada)
+        setTimeout(()=>{
+          index++;
+          // troca com fade simples para suavizar transição
+          fadeToImage(images[index]);
+          counterEl.textContent = `${index+1} / ${images.length}`;
+          // se chegou no final, mostrar botão prosseguir
+          if (index >= images.length - 1){
+            proceedBtn.style.display = 'inline-block';
+          }
+        }, 180);
+      });
+
+      // Função para transição suave entre imagens (fade)
+      function fadeToImage(src){
+        const img = photoImg;
+        img.style.transition = 'opacity .18s linear';
+        img.style.opacity = '0';
+        setTimeout(()=>{
+          img.src = src;
+          img.style.opacity = '1';
+        }, 170);
+      }
+
+      // Prosseguir -> tela texto + música + digitação
+      proceedBtn.addEventListener('click', async () => {
+        // Garante que áudio seja iniciado por gesto do usuário (requisito iOS).
+        if (!audio){
+          audio = new Audio(musicUrl);
+          audio.loop = false;
+        }
+        try{
+          await audio.play(); // tentativa de tocar
+          musicState.textContent = "Música: tocando";
+          toggleMusic.textContent = "Pausar";
+        }catch(e){
+          // se falhar, ficará pausado e usuário pode tocar manualmente
+          musicState.textContent = "Música: pausada (toque para iniciar)";
+          toggleMusic.textContent = "Tocar";
+        }
+
+        // transição de telas
+        shootingEl.style.display = 'none';
+        textEl.style.display = 'block';
+
+        // limpa texto e garante scroll inicial no topo
+        typedTextEl.innerHTML = '';
+        typedTextEl.scrollTop = 0;
+
+        // inicia digitação
+        startTyping(typingText);
+      });
+
+      toggleMusic.addEventListener('click', async () => {
+        if (!audio){
+          audio = new Audio(musicUrl);
+        }
+        if (audio.paused){
+          try {
+            await audio.play();
+            musicState.textContent = "Música: tocando";
+            toggleMusic.textContent = "Pausar";
+          } catch(err){
+            console.warn("Impossível tocar automaticamente:", err);
+            musicState.textContent = "Música: pausada (clique novamente)";
+          }
+        } else {
+          audio.pause();
+          musicState.textContent = "Música: pausada";
+          toggleMusic.textContent = "Tocar";
+        }
+      });
+
+      // função de digitação letra por letra (com rolagem automática da área de texto para mostrar o que está aparecendo)
+      function startTyping(text){
+        typedTextEl.innerHTML = '';
+        let i = 0;
+        isTyping = true;
+        if (typingTimer) clearInterval(typingTimer);
+        typingTimer = setInterval(()=>{
+          i++;
+          // quebra em parágrafos visíveis: manter quebras de linha caso haja \n
+          const partial = text.slice(0,i);
+          typedTextEl.innerHTML = formatPreserveParagraphs(escapeHtml(partial)) + '<span class="cursor"></span>';
+          // rolagem automática para o fim
+          typedTextEl.scrollTop = typedTextEl.scrollHeight;
+          if (i >= text.length){
+            clearInterval(typingTimer);
+            isTyping = false;
+            typedTextEl.innerHTML = formatPreserveParagraphs(escapeHtml(text)) + '<span class="cursor"></span>';
+            typedTextEl.scrollTop = typedTextEl.scrollHeight;
+          }
+        }, typingSpeed);
+      }
+
+      // formata o texto mantendo quebras em <p>
+      function formatPreserveParagraphs(s){
+        // substitui duplas quebras em parágrafos
+        return s.replace(/(?:\r\n|\r|\n){2,}/g, '</p><p>').replace(/(?:\r\n|\r|\n)/g, '<br>');
+        // Observação: se quiser parágrafos, pode envolver com <p>...</p> na saída final
+      }
+
+      // pequena util util para escapar HTML
+      function escapeHtml(s){
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+
+      // Acessibilidade: permitir navegação por teclado (Enter)
+      startBtn.addEventListener('keyup', e => { if (e.key === 'Enter') startBtn.click(); });
+      shutterBtn.addEventListener('keyup', e => { if (e.key === 'Enter') shutterBtn.click(); });
+      proceedBtn.addEventListener('keyup', e => { if (e.key === 'Enter') proceedBtn.click(); });
+
+      // Small tweak: permitir tocar diretamente na imagem para tirar foto (UX mobile)
+      photoImg.addEventListener('click', () => {
+        // simula clique no shutter
+        shutterBtn.click();
+      });
+
+      // Preload: se for necessário, você pode forçar carregamento inicial do áudio (mas iOS requer gesto)
+      // audio = new Audio(musicUrl); // descomente se quiser instanciar logo
+
+      // Fim IIFE
+    })();
+  </script>
+</body>
+</html>

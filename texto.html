@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Julgamento — Cena Interativa</title>
+<style>
+  :root{
+    --bg:#0b0b10; --card:#0f1720; --accent:#c62828; --text:#eef2ff;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#05050a,#0b0b10);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px}
+  .panel{width:100%;max-width:980px;background:linear-gradient(180deg,#0b1220,#07101a);border-radius:12px;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.7);position:relative}
+
+  .topbar{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .btn{background:linear-gradient(180deg,#1b2430,#0f1722);border:1px solid rgba(255,255,255,.04);padding:10px 16px;border-radius:10px;color:var(--text);font-weight:700;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,#c62828,#a21e1e);box-shadow:0 8px 24px rgba(198,40,40,.12)}
+  .btn:active{transform:translateY(1px)}
+
+  .stage{height:540px;max-height:75vh;border-radius:10px;background:#000;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.03)}
+
+  /* Intro text box on top of stage */
+  .textbox{position:absolute;left:20px;right:20px;bottom:20px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,.03);font-size:15px;line-height:1.5;max-height:40%;overflow:hidden}
+  .textbox .cursor{display:inline-block;width:10px;height:18px;background:linear-gradient(90deg,#fff, #ddd);margin-left:6px;vertical-align:text-bottom;animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* tribunal background images (first person) */
+  .scene-bg{position:absolute;inset:0;background-size:cover;background-position:center center;filter:contrast(.9) brightness(.85)}
+  .scene-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.55))}
+
+  /* legenda pixelada */
+  .pixel-caption{position:absolute;left:50%;top:14%;transform:translateX(-50%);padding:8px 12px;border-radius:6px;background:rgba(0,0,0,.6);font-family:var(--mono);font-size:14px;color:#fff;letter-spacing:.6px;text-shadow:0 1px 0 #000, 0 2px 0 #000, 0 3px 0 #000}
+  .pixel-caption.pixel{image-rendering:pixelated}
+
+  /* juiz martelo image */
+  .judge-img{position:absolute;right:12%;top:8%;width:180px;height:auto;opacity:0;transform:translateY(-10px) scale(.95);transition:all .6s cubic-bezier(.2,.9,.2,1);filter:drop-shadow(0 10px 30px rgba(0,0,0,.6))}
+
+  /* CULPADA big text */
+  .verdict{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) scale(.98);font-weight:900;font-size:48px;color:var(--accent);text-shadow:0 6px 30px rgba(198,40,40,.12);opacity:0;transition:all .5s ease}
+
+  /* balões de HQ */
+  .bubble{position:absolute;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff;font-weight:800;font-size:14px;border:2px solid rgba(0,0,0,.2);opacity:0;transform:translateY(6px) scale(.8);filter:drop-shadow(0 10px 20px rgba(0,0,0,.5));animation:popIn .5s cubic-bezier(.2,.9,.2,1) forwards}
+  @keyframes popIn{to{opacity:1;transform:translateY(0) scale(1)}}
+
+  /* prosseguir button */
+  .proceed{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);opacity:0;transition:opacity .35s ease;pointer-events:none}
+  .proceed.show{opacity:1;pointer-events:auto}
+
+  /* next sequence text area */
+  .next-text{position:absolute;left:10%;right:10%;top:58%;transform:translateY(0);padding:12px;background:rgba(0,0,0,.55);border-radius:8px;font-size:15px;display:none}
+
+  /* responsive tweaks */
+  @media (max-width:720px){
+    .stage{height:72vh}
+    .judge-img{width:120px;right:6%}
+    .verdict{font-size:34px}
+    .pixel-caption{font-size:13px;top:10%}
+    .textbox{font-size:14px}
+  }
+  @media (max-width:420px){
+    .panel{padding:14px}
+    .stage{height:68vh}
+    .judge-img{display:none}
+    .pixel-caption{top:8%}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel" role="application" aria-label="Cena do Julgamento">
+      <div class="topbar">
+        <button class="btn" id="btnStart">Iniciar</button>
+        <div style="flex:1"></div>
+        <div style="font-size:13px;color:rgba(255,255,255,.6)">Cena interativa</div>
+      </div>
+
+      <div class="stage" id="stage" aria-live="polite">
+        <!-- background inicial neutro -->
+        <div class="scene-bg" id="sceneBg" style="background-image: url('tribunal_fp.jpg')"></div>
+        <div class="scene-overlay"></div>
+
+        <!-- pixel caption -->
+        <div class="pixel-caption" id="pixelCaption" style="opacity:0;transform:translateY(-6px);transition:all .45s ease">Você está em um tribunal. O julgamento já foi retratado....</div>
+
+        <!-- judge hammer (aparece depois) -->
+        <img src="judge_hammer.png" alt="Juiz batendo o martelo" class="judge-img" id="judgeImg">
+
+        <!-- verdict big -->
+        <div class="verdict" id="verdict">Eu declaro <span style="color:#fff">CULPADA!</span></div>
+
+        <!-- speech bubbles container (will be created dynamically) -->
+        <div id="bubblesRoot" aria-hidden="true"></div>
+
+        <!-- intro textbox (typewriter) -->
+        <div class="textbox" id="textbox" aria-atomic="true">
+          <div id="typedText"></div><span class="cursor" id="cursor"></span>
+        </div>
+
+        <!-- proceed button -->
+        <div class="proceed" id="proceedWrap"><button class="btn primary" id="proceedBtn">Prosseguir</button></div>
+
+        <!-- next sequence text -->
+        <div class="next-text" id="nextTextBox" aria-live="polite"></div>
+
+      </div>
+
+      <!-- Audio (placeholder - substitua por seu arquivo) -->
+      <audio id="bgAudio" src="audio.mp3" preload="auto"></audio>
+
+    </div>
+  </div>
+
+<script>
+  // ---------- Configurações ----------
+  const paragraphs = [
+    "O corredor do tribunal cheirava a madeira antiga e ar condicionado. Vozes baixas, passos furtivos e o som distante de páginas viradas compunham o prelúdio.",
+    "Você entrou sem esperança, com o coração acelerado. Olhos curiose se voltaram, e o murmúrio tornou-se uma trilha atrás de cada seu passo.",
+    "A liturgia do julgamento começou: petições, testemunhos, olhares que pesavam mais que palavras. Foi assim que a narrativa teceu a história que te trouxe até aqui."
+  ]
+
+  const pixelLines = [
+    "Você está em um tribunal. O julgamento já foi retratado....",
+    "Com as alegações feitas, com o desembargador e a decisão do juiz..."
+  ]
+
+  const crowdShouts = ["CULPADA!","Merecidamente culpada!","Culpadíssima!","Pena máxima!","Justiça!","É culpada!"]
+
+  const TYPE_SPEED = 26 // ms per char for initial paragraphs
+  const NEXT_TYPE_SPEED = 38 // slower for later texts
+
+  // ---------- Elementos ----------
+  const btnStart = document.getElementById('btnStart')
+  const bgAudio = document.getElementById('bgAudio')
+  const typedText = document.getElementById('typedText')
+  const cursor = document.getElementById('cursor')
+  const textbox = document.getElementById('textbox')
+  const sceneBg = document.getElementById('sceneBg')
+  const pixelCaption = document.getElementById('pixelCaption')
+  const judgeImg = document.getElementById('judgeImg')
+  const verdict = document.getElementById('verdict')
+  const bubblesRoot = document.getElementById('bubblesRoot')
+  const proceedWrap = document.getElementById('proceedWrap')
+  const proceedBtn = document.getElementById('proceedBtn')
+  const nextTextBox = document.getElementById('nextTextBox')
+
+  // state
+  let paraIndex = 0
+  let started = false
+
+  // util: typewriter para parágrafos (retorna Promise)
+  function typeParagraph(text, speed=35){
+    return new Promise(resolve =>{
+      typedText.innerHTML = ''
+      let i=0
+      cursor.style.display = 'inline-block'
+      function step(){
+        if(i < text.length){
+          const ch = text[i++] === '\n' ? '<br/>': text[i-1]
+          typedText.innerHTML += ch
+          // jump small delay for spaces to appear faster
+          setTimeout(step, text[i-1]===' ' ? speed*0.4 : speed)
+        } else {
+          cursor.style.display = 'none'
+          resolve()
+        }
+      }
+      step()
+    })
+  }
+
+  // sequência inicial: tocar áudio e digitar 3 parágrafos (um a um)
+  async function startSequence(){
+    if(started) return; started = true
+    // play audio
+    try{ await bgAudio.play() } catch(e) { /* autoplay pode falhar; usuário iniciará*/ }
+
+    for(let p of paragraphs){
+      await typeParagraph(p, TYPE_SPEED)
+      // pequeno intervalo entre parágrafos
+      await new Promise(r=>setTimeout(r,600))
+      // limpa para próximo parágrafo com fade
+      typedText.innerHTML = ''
+    }
+
+    // Após ~3 parágrafos, fazer a transição para a cena do tribunal
+    await transitionToCourt()
+  }
+
+  async function transitionToCourt(){
+    // mostra primeira legenda pixelada (com efeito)
+    pixelCaption.textContent = pixelLines[0]
+    pixelCaption.style.opacity = 1
+    pixelCaption.style.transform = 'translateY(0)'
+
+    await wait(1400)
+    // substitui por segunda linha com pequena animação
+    pixelCaption.style.opacity = 0; pixelCaption.style.transform = 'translateY(-6px)'
+    await wait(420)
+    pixelCaption.textContent = pixelLines[1]
+    pixelCaption.style.opacity = 1; pixelCaption.style.transform = 'translateY(0)'
+
+    // em seguida mostramos imagem do juiz batendo o martelo
+    await wait(900)
+    judgeImg.style.opacity = 1
+    judgeImg.style.transform = 'translateY(0) scale(1)'
+
+    // curto delay e solta o veredicto
+    await wait(700)
+    verdict.style.opacity = 1; verdict.style.transform = 'translate(-50%,-50%) scale(1)'
+
+    // solta as caixas de balão pelo topo (aleatórias)
+    spawnBubblesFor(3500)
+
+    // e após 3s mostra botão Prosseguir
+    setTimeout(()=>{ proceedWrap.classList.add('show') }, 3000)
+  }
+
+  // helper wait
+  function wait(ms){ return new Promise(r=>setTimeout(r,ms)) }
+
+  // spawn bubble animations
+  function spawnBubblesFor(durationMs){
+    const start = performance.now()
+    const maxBubbles = 14
+    let created = 0
+    const rect = bubblesRoot.getBoundingClientRect() || document.body.getBoundingClientRect()
+
+    function spawnOne(){
+      if(performance.now() - start > durationMs) return
+      if(created > maxBubbles) return
+      created++
+      const b = document.createElement('div')
+      b.className = 'bubble'
+      const text = crowdShouts[Math.floor(Math.random()*crowdShouts.length)]
+      b.textContent = text
+      // random horizontal position toward top area
+      const stageRect = document.getElementById('stage').getBoundingClientRect()
+      const left = stageRect.left + 20 + Math.random()*(stageRect.width - 120)
+      const top = stageRect.top + 30 + Math.random()*(stageRect.height*0.35)
+      // convert to container-relative
+      b.style.left = (left - stageRect.left) + 'px'
+      b.style.top = (top - stageRect.top) + 'px'
+      // scale depending on random
+      const scale = 0.9 + Math.random()*0.6
+      b.style.transform = `translateY(6px) scale(${scale})`
+      bubblesRoot.appendChild(b)
+
+      // quick float and fade
+      setTimeout(()=>{
+        b.style.transition = 'transform .9s cubic-bezier(.2,.9,.2,1), opacity .9s ease'
+        b.style.transform = `translateY(-18px) scale(${scale*1.02})`
+        b.style.opacity = '0.95'
+      }, 50)
+
+      // remove after time
+      setTimeout(()=>{ b.style.opacity = 0; b.style.transform = `translateY(-30px) scale(${scale})`; setTimeout(()=>b.remove(),700) }, 2600 + Math.random()*900)
+
+      // spawn a few more with stagger
+      if(created < maxBubbles) setTimeout(spawnOne, 180 + Math.random()*220)
+    }
+
+    // start a small burst
+    for(let i=0;i<4;i++){ setTimeout(spawnOne, i*140) }
+  }
+
+  // quando o usuário clicar Prosseguir — começa nova sequência de texto com digitação mais lenta
+  proceedBtn.addEventListener('click', async ()=>{
+    proceedWrap.classList.remove('show')
+    // esconde veredicto e jurado para focar texto (opcional)
+    //wide fade
+    verdict.style.transition = 'all .45s ease'; verdict.style.opacity = 0; judgeImg.style.opacity = 0
+
+    // prepara texto sequencial - você pode editar esse array para o que quiser
+    const nextSeq = [
+      "O martelo ecoou como um sino. O salão explodiu em murmúrios e depois em um coro que você não conseguiu nomear.",
+      "As palavras encontram significado nas reações: cada aplauso, cada gemido, cada olhar virou parte de uma sentença que não cabe mais desfazer.",
+      "Você respira fundo. Ainda assim, outro capítulo começa — não termina aqui."
+    ]
+
+    nextTextBox.style.display = 'block'
+    nextTextBox.innerHTML = ''
+
+    for(let t of nextSeq){
+      await typeToBox(nextTextBox, t, NEXT_TYPE_SPEED)
+      await wait(700)
+      // small pause then clear to next
+      nextTextBox.innerHTML = ''
+    }
+
+    // fim da sequência — manter música tocando como pediu
+  })
+
+  // typewriter for a specific box element
+  function typeToBox(el, text, speed){
+    return new Promise(resolve=>{
+      el.innerHTML = '';
+      let i=0
+      function step(){
+        if(i < text.length){
+          el.innerHTML += text[i++];
+          setTimeout(step, text[i-1]===' ' ? speed*0.4 : speed)
+        } else resolve()
+      }
+      step()
+    })
+  }
+
+  // start button handler
+  btnStart.addEventListener('click', ()=>{ startSequence() })
+
+  // accessibility: allow Enter to activate
+  btnStart.addEventListener('keydown', (e)=>{ if(e.key==='Enter') startSequence() })
+
+  // disable text selection on stage
+  document.getElementById('stage').addEventListener('mousedown', e=>e.preventDefault())
+
+  // if audio autoplay blocked, try resuming on user interaction
+  document.addEventListener('click', ()=>{ if(bgAudio.paused && started){ bgAudio.play().catch(()=>{}) } })
+
+</script>
+</body>
+</html>
