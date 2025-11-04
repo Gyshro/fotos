@@ -164,7 +164,8 @@
       line-height:1.5;
       color:#fff;
       width:100%;
-      max-height: calc(125% - 24px); /* ocupa grande parte da moldura, respeitando padding */
+      /* ajustado para caber e rolar corretamente dentro da moldura */
+      max-height: calc(100% - 16px);
       overflow-y:auto;
       -webkit-overflow-scrolling: touch;
       text-align:left;
@@ -260,13 +261,13 @@
 
   <script>
     /*
-      Versão ajustada: imagens locais 1.jpg..6.jpg, áudio msc.mp3, digitação ligeiramente mais lenta (80ms).
-      Coloque 1.jpg..6.jpg e msc.mp3 na mesma pasta do index.html.
+      Versão ajustada: imagens locais 1.png..6.png, áudio msc.mp3, digitação ligeiramente mais lenta (80ms).
+      Coloque 1.png..6.png e msc.mp3 na mesma pasta do index.html.
     */
 
     (function(){
       // ---- CONFIG ----
-      // Imagens locais numeradas 1.jpg .. 6.jpg
+      // Imagens locais numeradas 1.png .. 6.png
       const images = [
         "1.png",
         "2.png",
@@ -280,7 +281,7 @@
       const musicUrl = "msc.mp3";
 
       // Texto que será digitado (substitua por seu texto longo se quiser)
-      const typingText = "É impressionante que você seja assim, como se o universo tivesse parado por um instante só pra te planejar durante os 7 dias que disseram que Deus fez tudo. É uma verdadeira ocasião do alado, porque parece que você é algo feito na medida certa, metódicamente em padrões físicos e interiores que não encontro por ai. A forma como você fala, como se distrai, como pensa e até como se cala quando só quer um pouco de paz pra si. Eu te observo e penso que o mundo é meio injusto contigo, porque parece não entender a preciosidade que existe em ser tão autêntica. Mas ao mesmo tempo, acho que o mundo inteiro não conseguiria te conter, porque você é dessas pessoas que transcendem o comum e o padrão de todos, mas mais do que isso... eu na verdade gosto de pensar em ti como poesia, como uma modelo em meios a flashes de papparazzi. Porque você é além de fotos, você é uma ausência. Talvez porque me falte atitude pra contar o quanto você é uma atração em todo o seu existir e talvez não exista tanto doido quanto eu que faz um tipo de propaganda sobre você que beira ao fascínio de todo tipo possível, um tipo de propaganda que nem mesmo uma ditadura consegue ser exata. E há de quem tenha a coragem de dizer o contrário, porque certamente poderia muito bem acabar sumindo sem nem deixar rastros, seja quem protestasse. A minha ditadura diz com exatidão que há sentença de morte à quem tenta contrariar os gestos de capricho que você tem, a sua energia contagiosa de acordar já a mil por hora... Se lhe amar fosse pensamento, assim como militares amaram ter poder de um país e de pessoas, eu acho que você acabou de encaminhar um regime na mente das pessoas porque você é exatamente dessa forma, instaura na mente dos outros e sem pedir licença, um obrigado, um de nada, só vem. E é nesse charme que eu te vejo, desde o dia em que te conheci. Desde o dia em que eu te vi, eu já sabia que eu iria me entalar em sua personalidade. Se a história tivesse sido diferente... eu não sei a quem dedicaria isso, mas certamente não existiria esse alguém. Mas a verdade é que eu sou, sim, deslumbrado por esse alguém que é você. Deslumbrado por essa tua forma de ser mundo, de carregar o caos e ainda assim fazer dele algo bonito. E por mais que eu tente traduzir em palavras, nenhuma consegue conter o tanto que você representa — porque você não cabe em definições, você é aquilo que transborda. E se o universo realmente parou pra te planejar, então ele acertou o tempo perfeito pra me fazer te notar.";
+      const typingText = "É impressionante que você seja assim, como se o universo tivesse parado por um instante só pra te planejar durante os 7 dias que disseram que Deus fez tudo. É uma verdadeira ocasião do alado, porque parece que você é algo feito na medida certa, metódicamente em padrões físicos e interiores que não encontro por ai. A forma como você fala, como se distrai, como pensa e até como se cala quando só quer um pouco de paz pra si. Eu te observo e penso que o mundo é meio injusto contigo, porque parece não entender a preciosidade que existe em ser tão autêntica. Mas ao mesmo tempo, acho que o mundo inteiro não conseguiria te conter, porque você é dessas pessoas que transcendem o comum e o padrão de todos, mas mais do que isso... eu na verdade gosto de pensar em ti como poesia, como uma modelo em meios a flashes de papparazzi. Porque você é além de fotos, você é uma ausência. Talvez porque me falte atitude pra contar o quanto você é uma atração em todo o seu existir e talvez não exista tanto doido quanto eu que faz um tipo de propaganda sobre você que beira ao fascínio de todo tipo possível, um tipo de propaganda que nem mesmo uma ditadura consegue ser exata. E há de quem tenha a coragem de dizer o contrário, porque certamente poderia muito bem acabar sumindo sem nem deixar rastros, seja quem protestasse. A minha ditadura diz com exatidão que há sentença de morte à quem tenta contrariar os gestos de capricho que você tem, a sua energia contagiosa de acordar já a mil por hora... Se lhe amar fosse pensamento, assim como militares amaram ter poder de um país e de pessoas, eu acho que você acabou de encaminhar um regime na mente das pessoas porque você é exatamente dessa forma, instaura na mente dos outros e sem pedir licença, um obrigado, um de nada, só vem. E é nesse charme que eu te vejo, desde o dia em que te conheci. Desde o dia em que eu te vi, eu já sabia que eu iria me entalar em sua personalidade. Se a história tivesse sido diferente... eu não sei a quem dedicaria isso, mas certamente não existiria esse alguém. Mas a verdade é que eu sou, sim, deslumbrado por esse alguém que é você. Deslumbrado por essa tua forma de ser mundo, de carregar o caos e ainda assim fazer dele algo bonito. E por mais que eu tente traduzir em palavras, nenhuma consegue conter o tanto que você representa  porque você não cabe em definições, você é aquilo que transborda. E se o universo realmente parou pra te planejar, então ele acertou o tempo perfeito pra me fazer te notar.";
       const typingSpeed = 80; // ms por letra (mais lento como você pediu)
 
       // ---- ELEMENTOS ----
